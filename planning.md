@@ -38,8 +38,8 @@ Final score = (Groq score × 0.6) + (Stylometric score × 0.4)
 ### Thresholds
 | Score Range | Interpretation |
 |---|---|
-| > 0.75 | High confidence: AI-generated |
-| 0.40 – 0.75 | Uncertain |
+| > 0.70 | High confidence: AI-generated |
+| 0.40 – 0.70 | Uncertain |
 | < 0.40 | High confidence: Human-written |
 
 Thresholds are intentionally asymmetric. The uncertain band is wide to reduce
@@ -93,7 +93,7 @@ POST /submit
          | (final score 0-1)
          v
   [Transparency Label]
-  (>0.75 / 0.4-0.75 / <0.4)
+  (>0.70 / 0.4-0.70 / <0.4)
          |
          | (label text)
          v
