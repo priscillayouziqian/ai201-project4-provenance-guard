@@ -15,3 +15,8 @@ __pycache__/
 # IDE / Editor configuration
 .idea/
 .vscode/
+
+.env
+__pycache__/
+.venv/
+audit_log.json
