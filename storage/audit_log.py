@@ -23,7 +23,7 @@ def read_log():
 
 def create_entry(content_id: str, creator_id: str,
                  attribution: str, confidence: float,
-                 groq_score: float) -> dict:
+                 groq_score: float, stylometric_score: float) -> dict:
     """Create a structured log entry."""
     return {
         "content_id": content_id,
@@ -32,6 +32,6 @@ def create_entry(content_id: str, creator_id: str,
         "attribution": attribution,
         "confidence": confidence,
         "groq_score": groq_score,
-        "stylometric_score": None,
+        "stylometric_score": stylometric_score,
         "status": "classified"
     }

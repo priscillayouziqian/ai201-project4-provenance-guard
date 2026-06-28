@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from signals.groq_signal import get_groq_score
+from signals.stylometric_signal import get_stylometric_score
+from signals.confidence import get_confidence_score
 from storage.audit_log import write_log, read_log, create_entry
 import uuid
 import os
@@ -10,7 +12,7 @@ load_dotenv()
 app = Flask(__name__)
 
 def get_label(score: float) -> str:
-    if score > 0.75:
+    if score > 0.70:
         return ("Our system believes this content was created by AI. "
                 "Confidence: High. If you are the creator and believe this "
                 "is incorrect, you may submit an appeal.")
@@ -24,7 +26,7 @@ def get_label(score: float) -> str:
                 "you may submit an appeal.")
 
 def get_attribution(score: float) -> str:
-    if score > 0.75:
+    if score > 0.70:
         return "likely_ai"
     elif score >= 0.40:
         return "uncertain"
@@ -51,22 +53,27 @@ def submit():
     # Signal 1: Groq LLM
     groq_score = get_groq_score(text)
 
-    # Placeholder confidence (will update in M4)
-    confidence = groq_score
+    # Signal 2: Stylometric
+    stylo_score = get_stylometric_score(text)
+
+    # Combined confidence score
+    confidence = get_confidence_score(groq_score, stylo_score)
 
     # Generate attribution and label
     attribution = get_attribution(confidence)
     label = get_label(confidence)
 
     # Write to audit log
-    entry = create_entry(content_id, creator_id, attribution, 
-                         confidence, groq_score)
+    entry = create_entry(content_id, creator_id, attribution,
+                         confidence, groq_score, stylo_score)
     write_log(entry)
 
     return jsonify({
         "content_id": content_id,
         "attribution": attribution,
-        "confidence": round(confidence, 2),
+        "confidence": confidence,
+        "groq_score": groq_score,
+        "stylometric_score": stylo_score,
         "label": label
     }), 200
 
