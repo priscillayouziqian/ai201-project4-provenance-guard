@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from signals.groq_signal import get_groq_score
 from signals.stylometric_signal import get_stylometric_score
 from signals.confidence import get_confidence_score
@@ -10,6 +12,14 @@ import os
 load_dotenv()
 
 app = Flask(__name__)
+
+# Rate limiting
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[],
+    storage_uri="memory://",
+)
 
 def get_label(score: float) -> str:
     if score > 0.70:
@@ -33,7 +43,9 @@ def get_attribution(score: float) -> str:
     else:
         return "likely_human"
 
+
 @app.route("/submit", methods=["POST"])
+@limiter.limit("10 per minute; 100 per day")
 def submit():
     data = request.get_json()
 
@@ -75,6 +87,40 @@ def submit():
         "groq_score": groq_score,
         "stylometric_score": stylo_score,
         "label": label
+    }), 200
+
+
+@app.route("/appeal", methods=["POST"])
+def appeal():
+    data = request.get_json()
+
+    # Validation
+    if not data or "content_id" not in data or "creator_reasoning" not in data:
+        return jsonify({"error": "Missing required fields: content_id, creator_reasoning"}), 400
+
+    content_id = data["content_id"]
+    creator_reasoning = data["creator_reasoning"]
+
+    # Find original entry in log
+    logs = read_log()
+    entry = next((e for e in logs if e["content_id"] == content_id), None)
+
+    if not entry:
+        return jsonify({"error": "content_id not found"}), 404
+
+    # Update status to under_review
+    entry["status"] = "under_review"
+    entry["appeal_reasoning"] = creator_reasoning
+
+    # Save updated log
+    with open("audit_log.json", "w") as f:
+        import json
+        json.dump(logs, f, indent=2)
+
+    return jsonify({
+        "content_id": content_id,
+        "status": "under_review",
+        "message": "Appeal received. Your submission is now under review."
     }), 200
 
 
