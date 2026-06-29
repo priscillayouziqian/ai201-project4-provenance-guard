@@ -1,5 +1,7 @@
 # Provenance Guard
 
+[![Provenance Guard Demo](https://img.youtube.com/vi/Mz6Yi6YwgNQ/0.jpg)](https://www.youtube.com/watch?v=Mz6Yi6YwgNQ)
+
 A backend content attribution system for creative platforms. Provenance Guard
 classifies submitted text as likely AI-generated or likely human-written,
 returns a confidence score, displays a transparency label, and provides an
